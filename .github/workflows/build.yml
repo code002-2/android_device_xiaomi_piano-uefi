@@ -1,0 +1,54 @@
+name: UEFI Builder (piano)
+
+# Builds the piano UEFI and the recovery ZIPs (installer, uninstall,
+# uninstall-clean). Run it from the Actions tab.
+
+on:
+  workflow_dispatch:
+    inputs:
+      wallpaper_url:
+        description: 'Wallpaper image link (empty = files in tools/esp/wallpapers)'
+        required: false
+  push:
+    branches: [seventeen]
+    paths: ['uefi/**', 'selector/**', 'tools/**', '.github/workflows/build.yml']
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependencies
+        run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y clang lld llvm gcc-aarch64-linux-gnu imagemagick python3-pil >/dev/null
+          tools/setup-deps.sh
+          docker build -q -f docker/Dockerfile -t piano-uefi-build .
+
+      - name: Build UEFI
+        run: |
+          docker run --rm -v "$PWD:/p" -w /p/deps/Mu-Silicium piano-uefi-build \
+            python3 build_uefi.py -d piano -r RELEASE
+          make -C selector LLVM=/usr/bin LLD=/usr/bin
+
+      - name: Build ZIPs
+        env:
+          WALLPAPER_URL: ${{ inputs.wallpaper_url }}
+          CC: aarch64-linux-gnu-gcc
+        run: |
+          walls=(tools/esp/wallpapers/*.jpg tools/esp/wallpapers/*.png)
+          if [ -n "${WALLPAPER_URL:-}" ]; then
+            curl -fsSL "$WALLPAPER_URL" -o /tmp/wallpaper
+            walls=(/tmp/wallpaper)
+          fi
+          mkdir -p dist
+          tools/inject/make-zip.sh deps/Mu-Silicium/Mu-piano.img dist/piano-uefi.zip \
+            $(ls "${walls[@]}" 2>/dev/null)
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: piano-uefi
+          path: dist/*.zip
