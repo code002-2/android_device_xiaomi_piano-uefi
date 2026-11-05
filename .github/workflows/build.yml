@@ -29,8 +29,10 @@ jobs:
 
       - name: Build UEFI
         run: |
+          # Git in the container refuses a checkout owned by another user.
           docker run --rm -v "$PWD:/p" -w /p/deps/Mu-Silicium piano-uefi-build \
-            python3 build_uefi.py -d piano -r RELEASE
+            sh -c 'git config --global --add safe.directory "*" && python3 build_uefi.py -d piano -r RELEASE'
+          sudo chown -R "$(id -u):$(id -g)" deps
           make -C selector LLVM=/usr/bin LLD=/usr/bin
 
       - name: Build ZIPs
