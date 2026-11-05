@@ -23,7 +23,7 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt-get -qq update
-          sudo apt-get -qq install -y clang lld llvm gcc-aarch64-linux-gnu imagemagick python3-pil >/dev/null
+          sudo apt-get -qq install -y clang lld llvm gcc-aarch64-linux-gnu libc6-dev-arm64-cross imagemagick python3-pil >/dev/null
           tools/setup-deps.sh
           docker build -q -f docker/Dockerfile -t piano-uefi-build .
 
