@@ -2,7 +2,7 @@
 FROM ubuntu:24.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git build-essential lld uuid-dev nasm gcc-aarch64-linux-gnu python3 \
+    git build-essential lld uuid-dev nasm gcc-aarch64-linux-gnu libc6-dev-arm64-cross python3 \
     python3-pip python3-venv python3-git mono-devel gettext locales gnupg \
     ca-certificates clang llvm curl device-tree-compiler \
  && rm -rf /var/lib/apt/lists/* && locale-gen en_US.UTF-8

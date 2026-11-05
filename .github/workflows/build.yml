@@ -13,11 +13,8 @@ on:
     branches: [seventeen]
     paths: ['uefi/**', 'selector/**', 'tools/**', '.github/workflows/build.yml']
 
-env:
-  BUILD: deps/Mu-Silicium/Build/pianoPkg/RELEASE_CLANGPDB/AARCH64
-
 jobs:
-  firmware:
+  build:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
@@ -26,7 +23,7 @@ jobs:
       - name: Dependencies
         run: |
           sudo apt-get -qq update
-          sudo apt-get -qq install -y clang lld llvm >/dev/null
+          sudo apt-get -qq install -y clang lld llvm gcc-aarch64-linux-gnu libc6-dev-arm64-cross imagemagick python3-pil >/dev/null
           tools/setup-deps.sh
           docker build -q -f docker/Dockerfile -t piano-uefi-build .
 
@@ -38,43 +35,11 @@ jobs:
           sudo chown -R "$(id -u):$(id -g)" deps
           make -C selector LLVM=/usr/bin LLD=/usr/bin
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: firmware
-          path: |
-            deps/Mu-Silicium/Mu-piano.img
-            ${{ env.BUILD }}/Shell.efi
-            ${{ env.BUILD }}/AndroidBoot.efi
-            out/selector.bin
-
-  zips:
-    # The boot manager and the recovery helpers are arm64 programs: build
-    # them natively instead of cross-compiling against the host headers.
-    needs: firmware
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: firmware
-          path: firmware
-
       - name: Build ZIPs
         env:
           WALLPAPER_URL: ${{ inputs.wallpaper_url }}
-          CC: gcc
+          CC: aarch64-linux-gnu-gcc
         run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq install -y gcc imagemagick python3-pil >/dev/null
-          # make-esp.sh cross-compiles with this prefix; on arm64 it is the native compiler.
-          sudo ln -sf "$(command -v gcc)" /usr/local/bin/aarch64-linux-gnu-gcc
-          for t in ld ar objcopy; do sudo ln -sf "$(command -v $t)" /usr/local/bin/aarch64-linux-gnu-$t; done
-          mkdir -p "$BUILD" out
-          cp firmware/deps/Mu-Silicium/Mu-piano.img deps/Mu-Silicium/
-          cp firmware/$BUILD/*.efi "$BUILD"/
-          cp firmware/out/selector.bin out/
           walls=(tools/esp/wallpapers/*.jpg tools/esp/wallpapers/*.png)
           if [ -n "${WALLPAPER_URL:-}" ]; then
             curl -fsSL "$WALLPAPER_URL" -o /tmp/wallpaper
