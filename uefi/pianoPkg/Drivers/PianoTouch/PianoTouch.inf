@@ -1,9 +1,11 @@
 ## @file
 #  Novatek touch path probe for the Xiaomi Pad 8 Pro (piano, SM8750).
 #
-#  Reads the GENI serial engine at 0x0A88000 (the panel's touch SPI) and the
-#  TLMM line the panel pulls for its interrupt, and reports both on the console.
-#  It programs nothing, so a failed probe never affects the boot.
+#  Reads the GENI serial engine at 0x0A88000 (the panel's touch SPI) and writes
+#  what it found beside the kernel on the boot volume, \EFI\UniXNU\touch-probe.txt,
+#  because the platform exposes no USB serial port to the host. The file is read
+#  back from Android with adb. It programs nothing, so a failed probe never
+#  affects the boot.
 #
 #  SPDX-License-Identifier: BSD-2-Clause-Patent
 ##
@@ -24,9 +26,16 @@
   MdeModulePkg/MdeModulePkg.dec
 
 [LibraryClasses]
+  BaseMemoryLib
   DebugLib
+  MemoryAllocationLib
+  PrintLib
   UefiBootServicesTableLib
   UefiDriverEntryPoint
+
+[Protocols]
+  gEfiSimpleFileSystemProtocolGuid    ## CONSUMES
+  gEfiLoadedImageProtocolGuid         ## CONSUMES
 
 [Depex]
   TRUE
