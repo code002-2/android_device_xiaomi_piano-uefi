@@ -23,7 +23,9 @@
 #include <Library/BaseMemoryLib.h>
 #include <Library/DebugLib.h>
 #include <Library/MemoryAllocationLib.h>
+#include <Library/PrintLib.h>
 #include <Library/UefiBootServicesTableLib.h>
+#include <Protocol/LoadedImage.h>
 #include <Protocol/SimpleFileSystem.h>
 
 #define PIANO_GENI_SE_BASE      0x0A88000ULL
