@@ -120,12 +120,14 @@
 !endif
 
 [Components]
+  pianoPkg/Drivers/PianoTouch/PianoTouch.inf
   #
   # ACPI Tables
   #
   #piano/AcpiTables.inf
 
 [Components]
+  pianoPkg/Drivers/PianoTouch/PianoTouch.inf
   #
   # Volume and power keys
   #
